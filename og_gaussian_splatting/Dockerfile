@@ -89,7 +89,7 @@ RUN cd /colmap \
     && make -j8 \
     && make install
 
-WORKDIR /gaussian_splatting
+WORKDIR /gaussian-splatting
 
 
 
