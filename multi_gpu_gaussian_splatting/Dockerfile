@@ -101,4 +101,8 @@ RUN cd /colmap \
     && make -j8 \
     && make install
 
+# Get code to merge ply files
+RUN cd Grendel-GS && \
+wget https://raw.githubusercontent.com/EGalahad/GaussFusion/refs/heads/main/visualizer/merge_ply.py
+
 WORKDIR /Grendel-GS
