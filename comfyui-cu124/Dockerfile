@@ -19,15 +19,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12 python3.12-dev python3.12-venv \
     gcc g++ make cmake \
     ffmpeg x264 x265 \
-    git aria2 \
+    git aria2 git-lfs \
     nano \
     fonts-noto-cjk fonts-noto-color-emoji \
     libgl1-mesa-glx libglib2.0-0 \
     && curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
     && python3.12 get-pip.py \
     && rm get-pip.py \
+    # Tensor RT dependencies
+    && apt-get update && apt-get install -y --no-install-recommends \
+    tensorrt \
     && rm -rf /var/lib/apt/lists/*
-
 
 # Set Python 3.12 as default
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
@@ -158,8 +160,25 @@ USER root
 VOLUME /root
 EXPOSE 40188
 ENV CLI_ARGS=""
-
+ENV CUDA_HOME='/usr/local/cuda'
 RUN ./runner-scripts/install_comfy.sh
-RUN cd /root/ComfyUI && git checkout v0.3.7
+
+# TRELLIS image to 3D
+RUN git-lfs install
+RUN cd /root/ComfyUI && git clone https://huggingface.co/JeffreyXiang/TRELLIS-image-large
+# Delete checkpoint dir and remplace by the linked one
+RUN mkdir /root/ComfyUI/models/trellis
+RUN cd /root/ComfyUI/TRELLIS-image-large && rm -rf ckpts
+RUN ln -s /root/ComfyUI/models/trellis /root/ComfyUI/TRELLIS-image-large/ckpts
+# Install modules for trellis
+RUN pip install --ignore-installed blinker && pip install kaolin==0.17.0 --find-links https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.4.0_cu121.html && pip install flash-attn ollama ninja
+# Install nvdiffrast
+RUN git clone https://github.com/NVlabs/nvdiffrast && \
+cd nvdiffrast && pip install . && cd .. && rm -rf nvdiffrast
+# Trellis Reqs
+RUN git clone https://github.com/if-ai/ComfyUI-IF_Trellis.git && cd ComfyUI-IF_Trellis
+COPY trellis_reqs.txt /ComfyUI-IF_Trellis/trellis_reqs.txt
+RUN cd /ComfyUI-IF_Trellis && pip install -r trellis_reqs.txt && \
+cd .. && rm -rf ComfyUI-IF_Trellis 
 
 CMD ["bash","/runner-scripts/entrypoint.sh"]
