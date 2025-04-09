@@ -171,7 +171,10 @@ RUN mkdir /root/ComfyUI/models/trellis
 RUN cd /root/ComfyUI/TRELLIS-image-large && rm -rf ckpts
 RUN ln -s /root/ComfyUI/models/trellis /root/ComfyUI/TRELLIS-image-large/ckpts
 # Install modules for trellis
-RUN pip install --ignore-installed blinker && pip install kaolin==0.17.0 --find-links https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.4.0_cu121.html && pip install flash-attn ollama ninja
+
+#RUN pip install --ignore-installed blinker && pip install kaolin==0.17.0 --find-links https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.4.0_cu121.html && pip install flash-attn ollama ninja
+RUN pip install --ignore-installed blinker && pip install kaolin==0.17.0 --find-links https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.5.1_cu124.html && pip install flash-attn ollama ninja
+
 # Install nvdiffrast
 RUN git clone https://github.com/NVlabs/nvdiffrast && \
 cd nvdiffrast && pip install . && cd .. && rm -rf nvdiffrast
@@ -179,6 +182,8 @@ cd nvdiffrast && pip install . && cd .. && rm -rf nvdiffrast
 RUN git clone https://github.com/if-ai/ComfyUI-IF_Trellis.git && cd ComfyUI-IF_Trellis
 COPY trellis_reqs.txt /ComfyUI-IF_Trellis/trellis_reqs.txt
 RUN cd /ComfyUI-IF_Trellis && pip install -r trellis_reqs.txt && \
-cd .. && rm -rf ComfyUI-IF_Trellis 
+cd .. && rm -rf ComfyUI-IF_Trellis
+# Install diff gaussian rasterization (for GaussianSplatting Trellis output)
+RUN TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6+PTX" pip install git+https://github.com/autonomousvision/mip-splatting.git@main#subdirectory=submodules/diff-gaussian-rasterization
 
 CMD ["bash","/runner-scripts/entrypoint.sh"]
